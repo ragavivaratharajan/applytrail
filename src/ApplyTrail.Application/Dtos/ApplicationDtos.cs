@@ -12,7 +12,7 @@ public abstract class ApplicationFields : IValidatableObject
     [Required, StringLength(150)]
     public string RoleTitle { get; set; } = "";
 
-    [StringLength(500)]
+    [StringLength(2000)]
     public string? JobUrl { get; set; }
 
     public JobSource Source { get; set; } = JobSource.Other;
@@ -161,7 +161,7 @@ public class DuplicateCheckRequest
     [StringLength(150)]
     public string? RoleTitle { get; set; }
 
-    [StringLength(500)]
+    [StringLength(2000)]
     public string? JobUrl { get; set; }
 
     /// <summary>When editing, the application being edited (so it does not match itself).</summary>

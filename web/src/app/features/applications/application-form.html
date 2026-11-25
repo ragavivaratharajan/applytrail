@@ -79,10 +79,15 @@
           autocomplete="off"
           [attr.aria-invalid]="invalid('jobUrl')"
           aria-describedby="f-url-err"
+          (blur)="tidyJobLink()"
         />
         @if (invalid('jobUrl')) {
           <p id="f-url-err" class="error-text">
-            Use a full link that starts with http:// or https://.
+            @if (form.controls.jobUrl.hasError('maxlength')) {
+              This link is too long. The limit is 2,000 characters.
+            } @else {
+              Use a full link that starts with http:// or https://.
+            }
           </p>
         }
       </div>

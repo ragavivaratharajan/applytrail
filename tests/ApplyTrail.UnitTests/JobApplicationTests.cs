@@ -299,7 +299,7 @@ public class JobApplicationTests
 
         app.CompleteReminder(manual.Id, Now, Today, true, null, remindAgainInDays: 5);
 
-        Assert.Empty(app.Reminders.Where(r => r.IsOpen));
+        Assert.DoesNotContain(app.Reminders, r => r.IsOpen);
     }
 
     [Fact]

@@ -23,6 +23,7 @@ import { ApiService } from '../../core/api.service';
 import { DataStore } from '../../core/data-store';
 import { formatDate, todayLocal } from '../../core/dates';
 import { FormDialogService, FormTarget } from '../../core/form-dialog.service';
+import { tidyJobUrl } from '../../core/job-url';
 import {
   ApplicationFields,
   ApplicationStatus,
@@ -118,7 +119,7 @@ export class ApplicationFormComponent {
     {
       company: ['', [Validators.required, Validators.maxLength(150)]],
       roleTitle: ['', [Validators.required, Validators.maxLength(150)]],
-      jobUrl: ['', [Validators.maxLength(500), httpUrl]],
+      jobUrl: ['', [Validators.maxLength(2000), httpUrl]],
       status: ['Applied' as ApplicationStatus],
       appliedOn: [''],
       source: ['Other' as JobSource],
@@ -177,6 +178,13 @@ export class ApplicationFormComponent {
     return this.form.controls.status.value !== 'Saved';
   }
 
+  /** Shortens a pasted link (LinkedIn search links especially) to the job itself, once you leave the field. */
+  protected tidyJobLink(): void {
+    const control = this.form.controls.jobUrl;
+    const tidy = tidyJobUrl(control.value);
+    if (tidy !== control.value) control.setValue(tidy);
+  }
+
   protected invalid(name: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || control.dirty);
@@ -193,6 +201,7 @@ export class ApplicationFormComponent {
 
   protected async submit(addAnother = false): Promise<void> {
     this.errors.set([]);
+    this.tidyJobLink(); // Enter can submit without the field ever losing focus
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       this.errors.set(['Fix the highlighted fields and try again.']);

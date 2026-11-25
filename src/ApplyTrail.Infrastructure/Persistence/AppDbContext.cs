@@ -42,7 +42,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Id).ValueGeneratedNever();
             e.Property(x => x.Company).HasMaxLength(150).IsRequired();
             e.Property(x => x.RoleTitle).HasMaxLength(150).IsRequired();
-            e.Property(x => x.JobUrl).HasMaxLength(500);
+            e.Property(x => x.JobUrl).HasMaxLength(2000);
             e.Property(x => x.Location).HasMaxLength(150);
             e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
             e.Property(x => x.Notes).HasMaxLength(5000);

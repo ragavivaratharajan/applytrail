@@ -82,7 +82,7 @@ namespace ApplyTrail.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("JobUrl")
-                        .HasMaxLength(500)
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LastActivityAt")

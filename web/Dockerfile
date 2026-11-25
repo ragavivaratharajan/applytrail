@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Build context: the web/ folder.   docker build -t applytrail-web web
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 
 # Install first, from the lockfile only, so this layer is cached until a dependency changes.

@@ -1,23 +1,48 @@
 version: 2
 updates:
+  # One pull request per ecosystem per week instead of a flood. Major versions (a new Angular, .NET or Node
+  # release) are upgraded on purpose, not by a bot, so only minor and patch updates are proposed.
   - package-ecosystem: nuget
     directory: /
     schedule: { interval: weekly }
+    open-pull-requests-limit: 3
     groups:
-      microsoft:
-        patterns: ["Microsoft.*", "System.*"]
+      nuget-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /web
     schedule: { interval: weekly }
+    open-pull-requests-limit: 3
     groups:
-      angular:
-        patterns: ["@angular/*", "@angular-devkit/*"]
+      npm-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ["*"]
+
   - package-ecosystem: docker
     directory: /web
     schedule: { interval: monthly }
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: docker
     directory: /src/ApplyTrail.Api
     schedule: { interval: monthly }
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

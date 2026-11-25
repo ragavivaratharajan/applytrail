@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="3.*" />
     <!-- The EF tools (dotnet ef) require the startup project to reference the Design package. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*">
       <PrivateAssets>all</PrivateAssets>

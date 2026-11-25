@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ApplyTrail.Api/ApplyTrail.Api.csproj" />
+    <Project Path="src/ApplyTrail.Application/ApplyTrail.Application.csproj" />
+    <Project Path="src/ApplyTrail.Domain/ApplyTrail.Domain.csproj" />
+    <Project Path="src/ApplyTrail.Infrastructure/ApplyTrail.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ApplyTrail.IntegrationTests/ApplyTrail.IntegrationTests.csproj" />
+    <Project Path="tests/ApplyTrail.UnitTests/ApplyTrail.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+coverage/
+
+# Local databases (SQLite and its write-ahead log files)
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets and local config
+.env
+appsettings.*.local.json
+
+# Node / Angular (web/ has its own .gitignore too)
+node_modules/
+dist/
+.angular/
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.DS_Store
+Thumbs.db

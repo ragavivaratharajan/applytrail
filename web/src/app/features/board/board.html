@@ -1,0 +1,89 @@
+<div class="px-4 pt-5 pb-28 lg:px-9 lg:pt-8 lg:pb-10">
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="page-title">Board</h1>
+      <p class="mt-1 text-soft">
+        Drag a strip to another stage to update it. Each stage also has a picker on the strip.
+      </p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="formDialog.openCreate()">
+      <at-icon name="plus" />New application
+    </button>
+  </header>
+
+  @if (error(); as message) {
+    <div role="alert" class="panel panel-pad mt-6 border-danger/50 text-danger">{{ message }}</div>
+  } @else if (!loaded()) {
+    <p class="mt-6 text-soft">Loading the board…</p>
+  } @else if (total() === 0) {
+    <div class="panel panel-pad mt-6 text-center">
+      <p class="font-display text-lg font-semibold">Your board is empty</p>
+      <p class="mx-auto mt-1 max-w-md text-soft">
+        Strips appear here as you add applications, one lane per stage.
+      </p>
+      <button type="button" class="btn btn-primary mt-4" (click)="formDialog.openCreate()">
+        <at-icon name="plus" />Add an application
+      </button>
+    </div>
+  } @else {
+    @if (total() > limit) {
+      <p class="mt-4 text-soft">
+        Showing the {{ limit }} most recently active of {{ total() }}. Use the Applications list to
+        see the rest.
+      </p>
+    }
+
+    <div
+      cdkDropListGroup
+      class="-mx-4 mt-5 flex snap-x snap-mandatory scroll-pl-4 gap-3 overflow-x-auto px-4 pb-4 lg:-mx-9 lg:scroll-pl-9 lg:px-9"
+    >
+      @for (lane of lanes(); track lane.status) {
+        <section
+          [class]="
+            'flex-none snap-start ' +
+            statusClass(lane.status) +
+            (lane.closed ? ' w-[16rem]' : ' w-[18.5rem]')
+          "
+          [attr.aria-labelledby]="'lane-' + lane.status"
+        >
+          <header
+            class="mb-2 flex items-baseline justify-between gap-2 border-b-2 border-[var(--c)] pb-1.5"
+          >
+            <h2
+              [id]="'lane-' + lane.status"
+              class="text-[1.05rem] font-semibold"
+              [title]="statusHint[lane.status]"
+            >
+              {{ statusLabel[lane.status] }}
+            </h2>
+            <span class="text-soft">{{ lane.items.length }}</span>
+          </header>
+
+          <div
+            cdkDropList
+            [cdkDropListData]="lane.items"
+            (cdkDropListDropped)="drop($event, lane.status)"
+            class="flex min-h-32 flex-col gap-2 rounded-lg p-1 transition-colors [&.cdk-drop-list-receiving]:bg-[color-mix(in_oklab,var(--c)_10%,transparent)]"
+          >
+            @for (app of lane.items; track app.id) {
+              <at-strip
+                cdkDrag
+                [cdkDragData]="app"
+                [cdkDragStartDelay]="dragDelay"
+                [app]="app"
+                [hideStatus]="hideStatus"
+                (statusChange)="move(app, $event)"
+              />
+            } @empty {
+              <p
+                class="rounded-lg border border-dashed border-line-strong px-3 py-6 text-center text-[0.875rem] text-soft"
+              >
+                {{ lane.closed ? 'Nothing here' : 'Drop a strip here' }}
+              </p>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>

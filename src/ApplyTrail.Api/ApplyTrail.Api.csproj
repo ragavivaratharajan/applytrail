@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>ApplyTrail.Api</RootNamespace>
+    <UserSecretsId>applytrail-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ApplyTrail.Application\ApplyTrail.Application.csproj" />
+    <ProjectReference Include="..\ApplyTrail.Infrastructure\ApplyTrail.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+    <!-- The EF tools (dotnet ef) require the startup project to reference the Design package. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ApplyTrail.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

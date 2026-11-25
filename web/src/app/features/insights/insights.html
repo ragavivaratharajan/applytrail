@@ -1,0 +1,246 @@
+<div class="page">
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="page-title">Insights</h1>
+      <p class="mt-1 text-soft">
+        What your applications are doing, so you can spend time where it pays off.
+      </p>
+    </div>
+    <div>
+      <label class="label" for="range">Period</label>
+      <select id="range" class="input w-auto" [value]="weeks()" (change)="setWeeks($event)">
+        @for (w of ranges; track w) {
+          <option [value]="w" [selected]="w === weeks()">Last {{ w }} weeks</option>
+        }
+      </select>
+    </div>
+  </header>
+
+  @if (error(); as message) {
+    <div role="alert" class="panel panel-pad mt-6 border-danger/50 text-danger">{{ message }}</div>
+  } @else if (data(); as d) {
+    @if (d.funnel.applied === 0) {
+      <div class="panel panel-pad mt-6 text-center">
+        <p class="font-display text-lg font-semibold">Insights start with your first application</p>
+        <p class="mx-auto mt-1 max-w-md text-soft">
+          Once you have applied for a few roles, this page shows your reply rate, how long replies
+          take and which sources work.
+        </p>
+        <button type="button" class="btn btn-primary mt-4" (click)="formDialog.openCreate()">
+          <at-icon name="plus" />Add an application
+        </button>
+      </div>
+    } @else {
+      <div [class.opacity-60]="loading()">
+        <dl
+          class="panel mt-6 grid divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x"
+        >
+          <div class="p-4">
+            <dt class="font-semibold">Reply rate</dt>
+            <dd class="mt-1 font-display text-[2rem] leading-none font-bold">
+              {{ percent(d.responseRate) }}
+            </dd>
+            <dd class="mt-1.5 text-[0.875rem] text-soft">
+              {{ d.funnel.responded }} of {{ d.funnel.applied }} heard back, including rejections
+            </dd>
+          </div>
+          <div class="p-4">
+            <dt class="font-semibold">Interview rate</dt>
+            <dd class="mt-1 font-display text-[2rem] leading-none font-bold">
+              {{ percent(d.interviewRate) }}
+            </dd>
+            <dd class="mt-1.5 text-[0.875rem] text-soft">
+              {{ d.funnel.interviewed }} reached interviews or beyond
+            </dd>
+          </div>
+          <div class="p-4">
+            <dt class="font-semibold">Time to first reply</dt>
+            <dd class="mt-1 font-display text-[2rem] leading-none font-bold">
+              {{ averageText(d.averageDaysToResponse) }}
+            </dd>
+            <dd class="mt-1.5 text-[0.875rem] text-soft">
+              Average, counted from the day you applied
+            </dd>
+          </div>
+          <div class="p-4">
+            <dt class="font-semibold">Gone quiet</dt>
+            <dd class="mt-1 font-display text-[2rem] leading-none font-bold">{{ d.staleCount }}</dd>
+            <dd class="mt-1.5 text-[0.875rem] text-soft">
+              No news for {{ staleAfter() }} days or more.
+              <a routerLink="/today" class="underline">See them on Today</a>
+            </dd>
+          </div>
+        </dl>
+
+        @if (smallSample()) {
+          <p class="mt-3 text-soft">
+            With only {{ d.funnel.applied }} applications so far, these rates will move a lot. They
+            settle once you reach about 20.
+          </p>
+        }
+
+        <div class="mt-8 grid gap-8 lg:grid-cols-2">
+          <section aria-labelledby="h-funnel">
+            <h2 id="h-funnel" class="section-title">How far applications get</h2>
+            <p class="text-soft">All time, as a share of everything you applied for.</p>
+            <ul class="mt-4 space-y-3.5">
+              @for (row of funnel(); track row.label) {
+                <li>
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span>{{ row.label }}</span>
+                    <span class="font-semibold"
+                      >{{ row.value
+                      }}<span class="font-normal text-soft">{{
+                        rate(row.value, d.funnel.applied)
+                      }}</span></span
+                    >
+                  </div>
+                  <div class="mt-1 h-5 rounded-sm bg-line/50">
+                    <div
+                      class="h-full rounded-r-[4px] bg-[var(--chart-1)]"
+                      [style.width.%]="row.value ? row.share * 100 : 0"
+                      [style.min-width.px]="row.value ? 3 : 0"
+                    ></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+
+          <section aria-labelledby="h-weekly">
+            <h2 id="h-weekly" class="section-title">Week by week</h2>
+            <p class="text-soft">Applications sent and first replies received.</p>
+
+            <ul class="mt-3 flex gap-4 text-[0.875rem]" aria-label="Legend">
+              <li class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-sm bg-[var(--chart-1)]"></span>Applied
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-sm bg-[var(--chart-2)]"></span>First replies
+              </li>
+            </ul>
+
+            <div class="mt-3 grid grid-cols-[2rem_1fr] gap-x-2">
+              <div
+                class="flex h-44 flex-col justify-between text-right text-[0.75rem] text-soft"
+                aria-hidden="true"
+              >
+                @for (t of ticks(); track $index) {
+                  <span class="-my-1.5 leading-none">{{ t }}</span>
+                }
+              </div>
+              <div class="relative h-44">
+                <div class="absolute inset-0 flex flex-col justify-between" aria-hidden="true">
+                  <span class="border-t border-line"></span
+                  ><span class="border-t border-line"></span
+                  ><span class="border-t border-line-strong"></span>
+                </div>
+                <div class="relative flex h-full items-end justify-between gap-1">
+                  @for (w of d.weekly; track w.weekStart) {
+                    <div
+                      class="group relative flex h-full flex-1 items-end justify-center gap-0.5 rounded-sm outline-offset-0 hover:bg-primary/5 focus-visible:bg-primary/5"
+                      tabindex="0"
+                      role="img"
+                      [attr.aria-label]="weekSummary(w)"
+                    >
+                      <span
+                        class="w-3 max-w-[40%] rounded-t-[4px] bg-[var(--chart-1)] sm:w-4"
+                        [style.height.%]="height(w.applied)"
+                      ></span>
+                      <span
+                        class="w-3 max-w-[40%] rounded-t-[4px] bg-[var(--chart-2)] sm:w-4"
+                        [style.height.%]="height(w.responded)"
+                      ></span>
+                      <div
+                        class="pointer-events-none absolute bottom-full z-10 mb-1 hidden min-w-36 rounded-lg border border-line bg-surface px-3 py-2 text-[0.8125rem] shadow-lg group-hover:block group-focus-visible:block"
+                      >
+                        <p class="text-soft">Week of {{ weekLabel(w.weekStart) }}</p>
+                        <p class="mt-0.5 flex items-center gap-2">
+                          <span class="h-0.5 w-3 bg-[var(--chart-1)]"></span
+                          ><b>{{ w.applied }}</b> applied
+                        </p>
+                        <p class="flex items-center gap-2">
+                          <span class="h-0.5 w-3 bg-[var(--chart-2)]"></span
+                          ><b>{{ w.responded }}</b> first
+                          {{ w.responded === 1 ? 'reply' : 'replies' }}
+                        </p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+              <span></span>
+              <div
+                class="mt-1.5 flex justify-between gap-1 text-[0.75rem] text-soft"
+                aria-hidden="true"
+              >
+                @for (w of d.weekly; track w.weekStart; let i = $index) {
+                  <span class="flex-1 text-center">{{
+                    i % labelStep() === 0 || i === d.weekly.length - 1 ? weekLabel(w.weekStart) : ''
+                  }}</span>
+                }
+              </div>
+            </div>
+
+            <details class="mt-3">
+              <summary class="cursor-pointer text-soft hover:text-ink">Show as a table</summary>
+              <table class="mt-2 w-full text-left text-[0.9375rem]">
+                <thead class="text-soft">
+                  <tr>
+                    <th class="py-1 font-medium">Week of</th>
+                    <th class="py-1 text-right font-medium">Applied</th>
+                    <th class="py-1 text-right font-medium">First replies</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (w of d.weekly; track w.weekStart) {
+                    <tr class="border-t border-line">
+                      <td class="py-1">{{ weekLabel(w.weekStart) }}</td>
+                      <td class="py-1 text-right">{{ w.applied }}</td>
+                      <td class="py-1 text-right">{{ w.responded }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </details>
+          </section>
+        </div>
+
+        <section class="mt-9" aria-labelledby="h-source">
+          <h2 id="h-source" class="section-title">Which sources work</h2>
+          <p class="text-soft">Where your applications came from and what came back.</p>
+          <div class="panel mt-3 overflow-x-auto">
+            <table class="w-full min-w-[28rem] text-left">
+              <thead class="text-soft">
+                <tr class="border-b border-line">
+                  <th class="px-4 py-2.5 font-medium">Source</th>
+                  <th class="px-4 py-2.5 text-right font-medium">Applied</th>
+                  <th class="px-4 py-2.5 text-right font-medium">Heard back</th>
+                  <th class="px-4 py-2.5 text-right font-medium">Interviews</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of d.bySource; track s.source) {
+                  <tr class="border-b border-line last:border-0">
+                    <th scope="row" class="px-4 py-2.5 font-medium">{{ sourceLabel[s.source] }}</th>
+                    <td class="px-4 py-2.5 text-right">{{ s.applied }}</td>
+                    <td class="px-4 py-2.5 text-right">
+                      {{ s.responded
+                      }}<span class="text-soft">{{ rate(s.responded, s.applied) }}</span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right">
+                      {{ s.interviewed
+                      }}<span class="text-soft">{{ rate(s.interviewed, s.applied) }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    }
+  } @else {
+    <p class="mt-6 text-soft">Loading insights…</p>
+  }
+</div>

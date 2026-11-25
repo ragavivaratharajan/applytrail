@@ -1,0 +1,103 @@
+<div class="min-h-screen lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+  <section class="hidden flex-col gap-10 px-12 py-10 lg:flex" aria-hidden="true">
+    <at-brand />
+    <div class="my-auto max-w-xl">
+      <p class="font-display text-[2.6rem] leading-[1.05] font-bold">
+        Know where every application stands.
+      </p>
+      <p class="mt-4 max-w-md text-[1.05rem] text-soft">
+        Log each role once. ApplyTrail schedules the follow-ups, flags what has gone quiet and shows
+        which sources get replies.
+      </p>
+      <ul class="intro mt-9 space-y-2.5" inert>
+        @for (app of samples; track app.id) {
+          <li><at-strip [app]="app" /></li>
+        }
+      </ul>
+    </div>
+    <p class="text-[0.875rem] text-soft">
+      Your data stays on the server you run it on. Export or delete it any time.
+    </p>
+  </section>
+
+  <main
+    class="flex min-h-screen flex-col justify-center bg-surface px-5 py-10 sm:px-10 lg:border-l lg:border-line"
+  >
+    <div class="mx-auto w-full max-w-sm">
+      <a routerLink="/" class="mb-8 inline-block lg:hidden" aria-label="ApplyTrail"><at-brand /></a>
+
+      <h1 class="text-[1.75rem] font-bold">
+        {{ isRegister() ? 'Create your account' : 'Sign in' }}
+      </h1>
+      <p class="mt-1 text-soft">
+        {{ isRegister() ? 'Start tracking in under a minute.' : 'Pick up where you left off.' }}
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="mt-6 space-y-4" novalidate>
+        @if (errors().length) {
+          <div role="alert" class="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2">
+            @for (message of errors(); track message) {
+              <p>{{ message }}</p>
+            }
+          </div>
+        }
+        <div>
+          <label class="label" for="a-email">Email</label>
+          <input
+            id="a-email"
+            type="email"
+            class="input"
+            formControlName="email"
+            autocomplete="email"
+            [attr.aria-invalid]="showError('email')"
+          />
+          @if (showError('email')) {
+            <p class="error-text">Enter a valid email address.</p>
+          }
+        </div>
+        <div>
+          <label class="label" for="a-password">Password</label>
+          <input
+            id="a-password"
+            type="password"
+            class="input"
+            formControlName="password"
+            [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
+            [attr.aria-invalid]="showError('password')"
+          />
+          @if (isRegister()) {
+            <p class="hint">At least 10 characters. A few random words work well.</p>
+          }
+          @if (showError('password')) {
+            <p class="error-text">Enter your password.</p>
+          }
+        </div>
+        <button type="submit" class="btn btn-primary w-full" [disabled]="busy()">
+          {{ isRegister() ? 'Create account' : 'Sign in' }}
+        </button>
+      </form>
+
+      <p class="mt-5 text-soft">
+        @if (isRegister()) {
+          Already have an account?
+          <a routerLink="/login" class="font-semibold text-ink underline">Sign in</a>
+        } @else {
+          New here?
+          <a routerLink="/register" class="font-semibold text-ink underline">Create an account</a>
+        }
+      </p>
+
+      @if (showDemoHint && !isRegister()) {
+        <p
+          class="mt-6 rounded-lg border border-dashed border-line-strong px-3 py-2.5 text-[0.875rem] text-soft"
+        >
+          Running with demo data?
+          <button type="button" class="font-semibold text-ink underline" (click)="fillDemo()">
+            Fill in the demo login
+          </button>
+        </p>
+      }
+    </div>
+  </main>
+</div>
+<at-toast-host />

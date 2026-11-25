@@ -1,0 +1,180 @@
+<div class="page">
+  <header class="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+    <div>
+      <h1 class="page-title">{{ heading() }}</h1>
+      @if (summary()) {
+        <p class="mt-1 text-[1.05rem] text-soft">{{ sentence() }}</p>
+      }
+    </div>
+
+    @if (summary(); as s) {
+      <div class="min-w-60" role="group" aria-label="Weekly goal">
+        <p class="flex items-baseline justify-between gap-6">
+          <span class="font-display text-lg font-semibold">This week</span>
+          <span class="text-soft"
+            ><b class="font-semibold text-ink">{{ s.goal.appliedThisWeek }}</b> of
+            {{ s.goal.target }} applications</span
+          >
+        </p>
+        <div
+          class="mt-1.5 flex gap-1"
+          role="img"
+          [attr.aria-label]="
+            s.goal.appliedThisWeek + ' of ' + s.goal.target + ' applications this week'
+          "
+        >
+          @for (filled of goalSegments(); track $index) {
+            <span
+              class="h-2.5 flex-1 rounded-sm"
+              [class]="filled ? 'bg-primary' : 'bg-line'"
+            ></span>
+          }
+        </div>
+        <p class="mt-1 text-[0.8125rem] text-soft">{{ goalText() }}</p>
+      </div>
+    }
+  </header>
+
+  @if (error(); as message) {
+    <div role="alert" class="panel panel-pad mt-6 border-danger/50 text-danger">{{ message }}</div>
+  } @else if (summary(); as s) {
+    <div class="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div class="space-y-7">
+        @if (s.overdue.length) {
+          <section aria-labelledby="h-overdue">
+            <h2 id="h-overdue" class="section-title mb-2.5">
+              Overdue <span class="text-soft">({{ s.overdue.length }})</span>
+            </h2>
+            <ul class="space-y-2">
+              @for (r of s.overdue; track r.id) {
+                <li>
+                  <at-reminder-row
+                    [reminder]="r"
+                    [today]="today()"
+                    [chaseDays]="chaseDays()"
+                    (done)="done($event)"
+                    (snooze)="snooze($event)"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (s.today.length) {
+          <section aria-labelledby="h-today">
+            <h2 id="h-today" class="section-title mb-2.5">
+              Due today <span class="text-soft">({{ s.today.length }})</span>
+            </h2>
+            <ul class="space-y-2">
+              @for (r of s.today; track r.id) {
+                <li>
+                  <at-reminder-row
+                    [reminder]="r"
+                    [today]="today()"
+                    [chaseDays]="chaseDays()"
+                    (done)="done($event)"
+                    (snooze)="snooze($event)"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (!s.overdue.length && !s.today.length) {
+          <section class="panel panel-pad">
+            <p class="font-display text-lg font-semibold">You are clear for today</p>
+            <p class="mt-1 max-w-lg text-soft">
+              Applied somewhere new? Add it now and ApplyTrail will schedule the follow-up for you.
+            </p>
+            <button type="button" class="btn btn-primary mt-4" (click)="formDialog.openCreate()">
+              <at-icon name="plus" />Add an application
+            </button>
+          </section>
+        }
+
+        @if (s.upcoming.length) {
+          <section aria-labelledby="h-upcoming">
+            <h2 id="h-upcoming" class="section-title mb-2.5">Coming up this week</h2>
+            <ul class="space-y-2">
+              @for (r of s.upcoming; track r.id) {
+                <li>
+                  <at-reminder-row
+                    [reminder]="r"
+                    [today]="today()"
+                    [chaseDays]="chaseDays()"
+                    (done)="done($event)"
+                    (snooze)="snooze($event)"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+
+      <aside class="space-y-7" aria-label="Quiet applications and pipeline">
+        <section aria-labelledby="h-quiet">
+          <h2 id="h-quiet" class="section-title mb-2.5">Going quiet</h2>
+          @if (s.stale.length) {
+            <ul class="space-y-2">
+              @for (app of s.stale; track app.id) {
+                <li class="panel p-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <a
+                      [routerLink]="['/applications', app.id]"
+                      class="font-display font-semibold hover:underline"
+                      >{{ app.company }}</a
+                    >
+                    <at-status-chip [status]="app.status" />
+                  </div>
+                  <p class="truncate text-soft">{{ app.roleTitle }}</p>
+                  <p class="mt-1 text-[0.8125rem] text-soft">
+                    No news for {{ app.daysSinceActivity }} days
+                  </p>
+                  <div class="mt-2 flex gap-2">
+                    <a class="btn btn-quiet btn-sm" [routerLink]="['/applications', app.id]"
+                      >Open</a
+                    >
+                    <button type="button" class="btn btn-text btn-sm" (click)="markGhosted(app)">
+                      Mark as no reply
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="text-soft">Every live application has had some news recently.</p>
+          }
+        </section>
+
+        <section aria-labelledby="h-pipeline">
+          <h2 id="h-pipeline" class="section-title mb-2.5">Where everything stands</h2>
+          <ul class="panel divide-y divide-line">
+            @for (row of pipeline(); track row.status) {
+              <li>
+                <a
+                  [routerLink]="['/applications']"
+                  [queryParams]="{ status: row.status }"
+                  [class]="
+                    'flex items-center justify-between px-3.5 py-2 hover:bg-surface-2 ' +
+                    statusClass(row.status)
+                  "
+                >
+                  <span class="inline-flex items-center gap-2.5"
+                    ><span class="size-2.5 rounded-full bg-[var(--c)]"></span
+                    >{{ statusLabel[row.status] }}</span
+                  >
+                  <span [class]="row.count ? 'font-semibold' : 'text-soft'">{{ row.count }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      </aside>
+    </div>
+  } @else {
+    <p class="mt-6 text-soft">Loading your day…</p>
+  }
+</div>

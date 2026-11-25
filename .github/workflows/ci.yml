@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (build and test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ApplyTrail.slnx
+
+      - name: Build
+        run: dotnet build ApplyTrail.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test ApplyTrail.slnx --no-build -c Release --logger "trx;LogFileName=results.trx"
+
+      # Fails the build if someone changes an entity but forgets to add a migration for it.
+      - name: Check migrations are up to date
+        if: ${{ hashFiles('src/ApplyTrail.Infrastructure/Migrations/**') != '' }}
+        run: |
+          dotnet tool restore
+          dotnet ef migrations has-pending-model-changes -p src/ApplyTrail.Infrastructure -s src/ApplyTrail.Api --no-build
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"
+
+  frontend:
+    name: Frontend (build and test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --watch=false
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build both images
+        run: docker compose build
+        env:
+          JWT_SIGNING_KEY: ci-only-key-not-a-secret-0123456789-abcdefghijkl

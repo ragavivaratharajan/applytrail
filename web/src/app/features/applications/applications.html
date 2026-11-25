@@ -1,0 +1,183 @@
+<div class="page">
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="page-title">Applications</h1>
+      @if (result(); as r) {
+        <p class="mt-1 text-soft">
+          {{ r.total }} {{ r.total === 1 ? 'application' : 'applications'
+          }}{{ hasFilters() ? ' match' : '' }}
+        </p>
+      }
+    </div>
+    <button type="button" class="btn btn-primary" (click)="formDialog.openCreate()">
+      <at-icon name="plus" />New application
+    </button>
+  </header>
+
+  <section aria-label="Filters" class="mt-5 space-y-3">
+    <div class="relative max-w-xl">
+      <at-icon
+        name="search"
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-soft"
+      />
+      <input
+        type="search"
+        class="input pl-10"
+        placeholder="Search company, role, location or notes"
+        aria-label="Search applications"
+        [formControl]="search"
+      />
+    </div>
+
+    <div class="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
+      @for (s of statuses; track s) {
+        <button
+          type="button"
+          [class]="
+            'chip cursor-pointer ' +
+            statusClass(s) +
+            (isSelected(s) ? ' !bg-[var(--c)] !text-white' : '')
+          "
+          [attr.aria-pressed]="isSelected(s)"
+          (click)="toggleStatus(s)"
+        >
+          {{ statusLabel[s] }}
+        </button>
+      }
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <select
+        class="input w-auto"
+        aria-label="Source"
+        [value]="params().get('source') ?? ''"
+        (change)="setFilter('source', $event)"
+      >
+        <option value="">Any source</option>
+        @for (s of sources; track s) {
+          <option [value]="s" [selected]="params().get('source') === s">
+            {{ sourceLabel[s] }}
+          </option>
+        }
+      </select>
+      <select
+        class="input w-auto"
+        aria-label="Priority"
+        [value]="params().get('priority') ?? ''"
+        (change)="setFilter('priority', $event)"
+      >
+        <option value="">Any priority</option>
+        @for (p of priorities; track p) {
+          <option [value]="p" [selected]="params().get('priority') === p">
+            {{ priorityLabel[p] }}
+          </option>
+        }
+      </select>
+      <select
+        class="input w-auto"
+        aria-label="Visa sponsorship"
+        [value]="params().get('sponsorship') ?? ''"
+        (change)="setFilter('sponsorship', $event)"
+      >
+        <option value="">Any sponsorship</option>
+        @for (s of sponsorships; track s) {
+          <option [value]="s" [selected]="params().get('sponsorship') === s">
+            {{ sponsorshipLabel[s] }}
+          </option>
+        }
+      </select>
+      <select
+        class="input w-auto"
+        aria-label="Sort by"
+        [value]="sortValue()"
+        (change)="setFilter('sort', $event)"
+      >
+        @for (s of sorts; track s.value) {
+          <option [value]="s.value" [selected]="sortValue() === s.value">{{ s.label }}</option>
+        }
+      </select>
+      <label class="inline-flex items-center gap-2 px-1">
+        <input
+          type="checkbox"
+          class="size-4 accent-[var(--primary)]"
+          [checked]="params().get('archived') === 'true'"
+          (change)="setArchived($event)"
+        />
+        Archived
+      </label>
+      @if (hasFilters()) {
+        <button type="button" class="btn btn-text btn-sm" (click)="clear()">
+          <at-icon name="x" [size]="14" />Clear filters
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="mt-5" aria-live="polite" [attr.aria-busy]="loading()">
+    @if (error(); as message) {
+      <div role="alert" class="panel panel-pad border-danger/50 text-danger">
+        {{ message }}
+        <button type="button" class="btn btn-quiet btn-sm ml-3" (click)="retry()">Try again</button>
+      </div>
+    } @else if (result(); as r) {
+      @if (r.items.length) {
+        <ul class="space-y-2" [class.opacity-60]="loading()">
+          @for (app of r.items; track app.id) {
+            <li>
+              <at-strip
+                [app]="app"
+                [stretch]="true"
+                [level]="2"
+                (statusChange)="changeStatus(app, $event)"
+              />
+            </li>
+          }
+        </ul>
+
+        @if (pages() > 1) {
+          <nav class="mt-5 flex items-center justify-between" aria-label="Pages">
+            <p class="text-soft">
+              Showing {{ firstShown() }} to {{ lastShown() }} of {{ r.total }}
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="btn btn-quiet btn-sm"
+                [disabled]="r.page <= 1"
+                (click)="goToPage(r.page - 1)"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                class="btn btn-quiet btn-sm"
+                [disabled]="r.page >= pages()"
+                (click)="goToPage(r.page + 1)"
+              >
+                Next
+              </button>
+            </div>
+          </nav>
+        }
+      } @else if (hasFilters()) {
+        <div class="panel panel-pad text-center">
+          <p class="font-display text-lg font-semibold">Nothing matches those filters</p>
+          <p class="mt-1 text-soft">Try removing one, or clear them all.</p>
+          <button type="button" class="btn btn-quiet mt-4" (click)="clear()">Clear filters</button>
+        </div>
+      } @else {
+        <div class="panel panel-pad text-center">
+          <p class="font-display text-lg font-semibold">No applications yet</p>
+          <p class="mx-auto mt-1 max-w-md text-soft">
+            Add the first role you have applied for, or save one you want to apply to later.
+          </p>
+          <button type="button" class="btn btn-primary mt-4" (click)="formDialog.openCreate()">
+            <at-icon name="plus" />Add an application
+          </button>
+        </div>
+      }
+    } @else {
+      <p class="text-soft">Loading applications…</p>
+    }
+  </section>
+</div>

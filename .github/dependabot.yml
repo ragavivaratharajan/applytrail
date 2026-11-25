@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      microsoft:
+        patterns: ["Microsoft.*", "System.*"]
+  - package-ecosystem: npm
+    directory: /web
+    schedule: { interval: weekly }
+    groups:
+      angular:
+        patterns: ["@angular/*", "@angular-devkit/*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+  - package-ecosystem: docker
+    directory: /web
+    schedule: { interval: monthly }
+  - package-ecosystem: docker
+    directory: /src/ApplyTrail.Api
+    schedule: { interval: monthly }

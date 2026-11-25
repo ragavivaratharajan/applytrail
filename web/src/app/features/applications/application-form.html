@@ -1,0 +1,239 @@
+<dialog
+  #dialog
+  (close)="closed()"
+  (click)="backdropClick($event)"
+  aria-labelledby="form-title"
+  class="m-auto max-h-[min(92vh,54rem)] w-[min(40rem,calc(100vw-1rem))] overflow-hidden rounded-2xl border border-line bg-surface p-0 shadow-2xl"
+>
+  <form
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    class="flex max-h-[min(92vh,54rem)] flex-col"
+    novalidate
+  >
+    <header class="flex items-center justify-between border-b border-line px-5 py-3.5">
+      <h2 id="form-title" class="text-xl font-semibold">
+        {{ isEdit() ? 'Edit application' : 'New application' }}
+      </h2>
+      <button
+        type="button"
+        class="btn btn-text btn-sm"
+        aria-label="Close"
+        (click)="dialogService.close()"
+      >
+        <at-icon name="x" />
+      </button>
+    </header>
+
+    <div class="grid gap-4 overflow-y-auto px-5 py-4 sm:grid-cols-2">
+      @if (errors().length) {
+        <div
+          role="alert"
+          class="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-[0.9375rem] sm:col-span-2"
+        >
+          @for (message of errors(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
+      }
+
+      <div>
+        <label class="label" for="f-company">Company</label>
+        <input
+          id="f-company"
+          class="input"
+          formControlName="company"
+          autocomplete="off"
+          [attr.aria-invalid]="invalid('company')"
+          aria-describedby="f-company-err"
+        />
+        @if (invalid('company')) {
+          <p id="f-company-err" class="error-text">Enter the company name.</p>
+        }
+      </div>
+
+      <div>
+        <label class="label" for="f-role">Role</label>
+        <input
+          id="f-role"
+          class="input"
+          formControlName="roleTitle"
+          autocomplete="off"
+          [attr.aria-invalid]="invalid('roleTitle')"
+          aria-describedby="f-role-err"
+        />
+        @if (invalid('roleTitle')) {
+          <p id="f-role-err" class="error-text">Enter the job title.</p>
+        }
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="label" for="f-url">Job link</label>
+        <input
+          id="f-url"
+          class="input"
+          type="url"
+          inputmode="url"
+          formControlName="jobUrl"
+          placeholder="https://"
+          autocomplete="off"
+          [attr.aria-invalid]="invalid('jobUrl')"
+          aria-describedby="f-url-err"
+        />
+        @if (invalid('jobUrl')) {
+          <p id="f-url-err" class="error-text">
+            Use a full link that starts with http:// or https://.
+          </p>
+        }
+      </div>
+
+      @if (duplicates().length) {
+        <div
+          role="status"
+          class="rounded-lg border border-line-strong bg-highlight/25 px-3 py-2.5 sm:col-span-2"
+        >
+          <p class="font-semibold">You may have applied here already</p>
+          <ul class="mt-1 space-y-1">
+            @for (match of duplicates(); track match.id) {
+              <li class="text-[0.9375rem]">
+                <a
+                  [routerLink]="['/applications', match.id]"
+                  class="font-semibold underline"
+                  (click)="dialogService.close()"
+                  >{{ match.company }}, {{ match.roleTitle }}</a
+                >
+                <span class="text-soft">
+                  ({{ duplicateReason(match) }}; {{ duplicateWhen(match) }})</span
+                >
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (!isEdit()) {
+        <div>
+          <label class="label" for="f-status">Status</label>
+          <select id="f-status" class="input" formControlName="status">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ statusLabel[s] }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (showsAppliedDate()) {
+        <div>
+          <label class="label" for="f-applied">Applied on</label>
+          <input
+            id="f-applied"
+            class="input"
+            type="date"
+            formControlName="appliedOn"
+            [max]="today"
+          />
+        </div>
+      }
+
+      <div>
+        <label class="label" for="f-source">Where you found it</label>
+        <select id="f-source" class="input" formControlName="source">
+          @for (s of sources; track s) {
+            <option [value]="s">{{ sourceLabel[s] }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="label" for="f-sponsor">Visa sponsorship</label>
+        <select id="f-sponsor" class="input" formControlName="sponsorship">
+          @for (s of sponsorships; track s) {
+            <option [value]="s">{{ sponsorshipLabel[s] }}</option>
+          }
+        </select>
+      </div>
+
+      <details class="group rounded-lg border border-line sm:col-span-2" [open]="isEdit()">
+        <summary class="cursor-pointer select-none px-3 py-2.5 font-semibold">More details</summary>
+        <div class="grid gap-4 border-t border-line p-3 sm:grid-cols-2">
+          <div>
+            <label class="label" for="f-location">Location</label>
+            <input id="f-location" class="input" formControlName="location" autocomplete="off" />
+          </div>
+          <div>
+            <label class="label" for="f-mode">Work mode</label>
+            <select id="f-mode" class="input" formControlName="workMode">
+              @for (m of workModes; track m) {
+                <option [value]="m">{{ workModeLabel[m] }}</option>
+              }
+            </select>
+          </div>
+          <div class="grid grid-cols-[1fr_1fr_5rem] gap-2 sm:col-span-2">
+            <div>
+              <label class="label" for="f-min">Salary from</label>
+              <input
+                id="f-min"
+                class="input"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                formControlName="salaryMin"
+              />
+            </div>
+            <div>
+              <label class="label" for="f-max">Salary to</label>
+              <input
+                id="f-max"
+                class="input"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                formControlName="salaryMax"
+                [attr.aria-invalid]="form.errors?.['salaryRange'] ? true : null"
+              />
+            </div>
+            <div>
+              <label class="label" for="f-cur">Currency</label>
+              <input
+                id="f-cur"
+                class="input uppercase"
+                maxlength="3"
+                formControlName="currency"
+                [attr.aria-invalid]="invalid('currency')"
+              />
+            </div>
+            @if (form.errors?.['salaryRange']) {
+              <p class="error-text col-span-3">The top of the range must be at least the bottom.</p>
+            }
+          </div>
+          <div>
+            <label class="label" for="f-priority">Priority</label>
+            <select id="f-priority" class="input" formControlName="priority">
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ priorityLabel[p] }}</option>
+              }
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="label" for="f-notes">Notes</label>
+            <textarea id="f-notes" class="input" formControlName="notes"></textarea>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <footer
+      class="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3"
+    >
+      <button type="button" class="btn btn-text" (click)="dialogService.close()">Cancel</button>
+      @if (!isEdit()) {
+        <button type="button" class="btn btn-quiet" [disabled]="saving()" (click)="submit(true)">
+          Save and add another
+        </button>
+      }
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ isEdit() ? 'Save changes' : 'Save' }}
+      </button>
+    </footer>
+  </form>
+</dialog>
